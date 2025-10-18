@@ -207,10 +207,15 @@
                     year: 'numeric'
                 });
 
+                const playerName = player.player_name || 'Anonymous';
+                const displayName = playerName === 'GOD'
+                    ? `${escapeHtml(playerName)} 😈`
+                    : escapeHtml(playerName);
+
                 return `
                     <div class="leaderboard-row">
                         <div class="rank">${rank}</div>
-                        <div class="player-name">${escapeHtml(player.player_name || 'Anonymous')}</div>
+                        <div class="player-name">${displayName}</div>
                         <div class="score">${formatScore(player.best_score)}</div>
                         <div class="date">${date}</div>
                     </div>
