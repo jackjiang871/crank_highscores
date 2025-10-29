@@ -169,7 +169,7 @@
 
             try {
                 const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/players?select=player_name,best_score,updated_at&order=best_score.asc,updated_at.asc&limit=100`,
+                    `${SUPABASE_URL}/rest/v1/players?select=player_name,best_score,updated_at&order=best_score.asc,updated_at.asc&limit=1000`,
                     {
                         headers: {
                             'apikey': SUPABASE_ANON_KEY,
