@@ -157,19 +157,31 @@
                 <div class="loading">Loading high scores...</div>
             </div>
         </div>
+
+        <button id="show-more-btn" class="refresh-btn" style="display: none;">Show More</button>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://twjtlqrfdscnknzesgst.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3anRscXJmZHNjbmtuemVzZ3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NjI5MDksImV4cCI6MjA3NjEzODkwOX0.07wRxztmgZNDEvIUeERO5Q4MTJKcwIUgxq2iqeJMqe0';
 
+        // Pagination state
+        let allPlayers = [];
+        let currentOffset = 0;
+        const CHUNK_SIZE = 1000;
+        let hasMoreData = true;
+
         async function loadLeaderboard() {
             const content = document.getElementById('leaderboard-content');
-            content.innerHTML = '<div class="loading">Loading high scores...</div>';
+            const showMoreBtn = document.getElementById('show-more-btn');
+
+            if (currentOffset === 0) {
+                content.innerHTML = '<div class="loading">Loading high scores...</div>';
+            }
 
             try {
                 const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/players?select=player_name,best_score,updated_at&order=best_score.asc,updated_at.asc&limit=10000`,
+                    `${SUPABASE_URL}/rest/v1/players?select=player_name,best_score,updated_at&order=best_score.asc,updated_at.asc&limit=${CHUNK_SIZE}&offset=${currentOffset}`,
                     {
                         headers: {
                             'apikey': SUPABASE_ANON_KEY,
@@ -183,22 +195,40 @@
                 }
 
                 const players = await response.json();
-                displayLeaderboard(players);
+
+                // Add new players to the collection
+                allPlayers = allPlayers.concat(players);
+
+                // Check if we have more data to load
+                hasMoreData = players.length === CHUNK_SIZE;
+                currentOffset += CHUNK_SIZE;
+
+                displayLeaderboard();
+
+                // Show/hide the "Show More" button
+                if (hasMoreData) {
+                    showMoreBtn.style.display = 'block';
+                    showMoreBtn.disabled = false;
+                    showMoreBtn.textContent = 'Show More';
+                } else {
+                    showMoreBtn.style.display = 'none';
+                }
+
             } catch (error) {
                 console.error('Error loading leaderboard:', error);
                 content.innerHTML = `<div class="error">Failed to load high scores. Please try again later.</div>`;
             }
         }
 
-        function displayLeaderboard(players) {
+        function displayLeaderboard() {
             const content = document.getElementById('leaderboard-content');
-            
-            if (players.length === 0) {
+
+            if (allPlayers.length === 0) {
                 content.innerHTML = '<div class="loading">No scores yet. Be the first to play!</div>';
                 return;
             }
 
-            const rows = players.map((player, index) => {
+            const rows = allPlayers.map((player, index) => {
                 const rank = index + 1;
 
                 const date = new Date(player.updated_at).toLocaleDateString('en-US', {
@@ -253,6 +283,13 @@
 
         // Load leaderboard on page load
         loadLeaderboard();
+
+        // Add event listener for "Show More" button
+        document.getElementById('show-more-btn').addEventListener('click', async function() {
+            this.disabled = true;
+            this.textContent = 'Loading...';
+            await loadLeaderboard();
+        });
 
     </script>
 </body>
